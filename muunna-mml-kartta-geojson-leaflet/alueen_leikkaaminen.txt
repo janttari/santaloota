@@ -1,0 +1,3 @@
+ogr2ogr -spat 21.40 60.52 26.22 61.66 -f GeoJSON -t_srs crs:84 alue.geojson sahkolinja.geojson
+# https://gdal.org/programs/ogr2ogr.html
+# Clip input layer with a bounding box (<xmin> <ymin> <xmax> <ymax>):

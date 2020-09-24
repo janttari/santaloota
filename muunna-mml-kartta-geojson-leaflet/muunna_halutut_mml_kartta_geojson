@@ -1,0 +1,25 @@
+#!/bin/bash
+#Muuntaa maastotietokannan täyden paketin yksittäisiksi kohteiksi, esim sahkolinja, hautausmaa jne.
+#Lataa maastotietokanta Geopackage pakettina  https://tiedostopalvelu.maanmittauslaitos.fi/tp/kartta
+#( https://www.maanmittauslaitos.fi/ajankohtaista/maastotietokanta-koottiin-pakettiin-tutkimusinfrastruktuurin-innovaatio-vauhdittaa)
+#
+#kun tämän skriptin suorittaa, alihakemistoon geojson tulee puretut tiedostot ja hakemistoon js valmiiksi javascriptille joka käy leafletiin suoraan
+#
+if [ $# -eq 0 ]
+  then
+    echo "Käyttö:"
+    echo "$0 <tiedosto.gpkg>"
+    exit 1
+fi
+mkdir -p geojson
+mkdir -p js
+kohteet=(sahkolinja tieviiva muuntaja kunta tulentekopaikka rautatie rautatieliikennepaikka)
+for var in "${kohteet[@]}" #kaksi ekaa ei ole kohteita
+do
+    kohde=$(echo "${var}"|cut -d ":" -f 2|cut -d " " -f 2)
+    echo Puretaan $kohde...
+    ogr2ogr -clipdstlayer "kunta" -f GeoJSON -t_srs crs:84 geojson/$kohde.geojson mtkmaasto.gpkg $kohde
+    echo "var $kohde =" >js/$kohde.js
+    cat geojson/$kohde.geojson >> js/$kohde.js
+done
+
