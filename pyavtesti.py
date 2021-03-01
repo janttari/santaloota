@@ -30,7 +30,7 @@ for packet in input_container.demux():
                     for h in tt: 
                         # print("yrivi",h.y, "xkoord",h.x) #ylempi rivi voi tulla myöhempään!
                         # print("h", h.planes, h, h.nb_colors, "koko", h.height, h.width) # h.height*h.width) == g.buffer_size
-                        for g in h .planes:
+                        for g in h.planes:
                             kuva= numpy.zeros((h.height, h.width, 3), numpy.uint8)
                             img = bytes(g)
                             x=0
