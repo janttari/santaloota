@@ -1,4 +1,4 @@
-  #!/usr/bin/env python3
+#!/usr/bin/env python3
 
 # sudo apt install tesseract-ocr-fin tesseract-ocr
 # sudo /usr/bin/python3 -m pip install --upgrade pip
