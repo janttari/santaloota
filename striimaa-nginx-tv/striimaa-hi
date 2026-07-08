@@ -1,0 +1,113 @@
+#!/bin/bash
+
+
+if [[ $# < 2 ]] ; then
+    echo käyttö:
+    echo striimaa play ch1 url ;toista url
+    echo striimaa nimi ch1 kanava_nimi ; toista channels.conf:sta
+    echo striimaa stop ch1 ; pysäytä toisto
+    echo striimaa testi ch1 ;testikuva
+    echo striimaa musta ch1 ; musta ruutu
+    echo striimaa voima ch1 ;voima audio + testikuva
+    echo striimaa pid ch1 ;kysy pid
+    exit 1
+fi
+
+komento=$1
+kanava=$2
+url=$3
+
+if [[ "$komento" == "nimi" ]]; then # soita nimellä joka on /etc/kanavat.conf --- striimaa nimi ch1 mtvurheilu1
+    haluttuch=$url #nimi urlin sijaan tässä toiminnossa
+    while read p; do
+    #echo "$p"
+        chnimi=${p%%\ *}
+        churl=${p#*\ }
+        if [[ "$chnimi" == "$haluttuch" ]];then
+            url=$churl
+            echo osuma $churl 
+        fi
+        #echo $nimi --- $url
+    done </etc/kanavat.conf
+    komento="play" # toistetaan seuraavassa vaiheessa
+    if [[ ${#url} <5 ]]; then
+        echo ei löydy!
+        exit
+    fi
+    echo siirrtyään soittamaan $komento $kanava $url
+fi
+
+
+if [[ "$komento" == "play" ]];then
+    if ! [[ $url == *"http://"* ]]; then # tarkistetaan että url on annettu
+        echo virheellinen url
+        exit 1
+    fi
+
+    if pgrep -f 127.0.0.1/live/$kanava &> /dev/null 2>&1; then
+        echo on jo käynnissä kanava $kanava tapetaan se
+        sudo kill -9 $(pgrep -f 127.0.0.1/live/$kanava)
+    fi
+    echo kanava $kanava ei ajossa, käynnistetään se
+    ffmpeg -re -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i $url -c:v h264_nvenc -preset p5 -tune ll -rc vbr -b:v 2.5M -maxrate 4M -bufsize 5M -vf "yadif,scale=768:432" -r 25 -g 50 -keyint_min 50 -sc_threshold 0 -bf 0 -c:a copy -flush_packets 1 -f flv rtmp://127.0.0.1/live/$kanava >/dev/null 2>/dev/null &
+
+elif [[ "$komento" == "testi" ]]; then
+    if pgrep -f 127.0.0.1/live/$kanava &> /dev/null 2>&1; then
+        echo on jo käynnissä kanava $kanava tapetaan se
+        sudo kill -9 $(pgrep -f 127.0.0.1/live/$kanava)
+    fi
+    echo kanava $kanava testikuva
+    if [[ "$kanava" == "ch1" ]]; then
+        ffmpeg -re -f lavfi -i "smptehdbars=rate=25:size=768x432" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v h264_nvenc -preset p5 -tune ll -rc vbr -b:v 2.5M -maxrate 4M -bufsize 5M -vf drawtext="text='LAHTI1  %{localtime\:%X}':rate=30:x=(w-tw)/2:y=(h-lh)/2+63:fontsize=40:fontcolor=black" -r 25 -g 50 -keyint_min 50 -sc_threshold 0 -bf 0 -c:a aac -flush_packets 1 -f flv rtmp://127.0.0.1/live/ch1  >/dev/null 2>/dev/null &
+    elif [[ "$kanava" == "ch2" ]]; then
+        ffmpeg -re -f lavfi -i "smptehdbars=rate=25:size=768x432" -f lavfi -i "sine=frequency=1000:sample_rate=48000" -c:v h264_nvenc -preset p5 -tune ll -rc vbr -b:v 2.5M -maxrate 4M -bufsize 5M -vf drawtext="text='LAHTI2  %{localtime\:%X}':rate=30:x=(w-tw)/2:y=(h-lh)/2+63:fontsize=40:fontcolor=black" -r 25 -g 50 -keyint_min 50 -sc_threshold 0 -bf 0 -c:a aac -flush_packets 1 -f flv rtmp://127.0.0.1/live/ch2  >/dev/null 2>/dev/null &
+    fi
+
+elif [[ "$komento" == "musta" ]]; then
+    if pgrep -f 127.0.0.1/live/$kanava &> /dev/null 2>&1; then
+        echo on jo käynnissä kanava $kanava tapetaan se
+        sudo kill -9 $(pgrep -f 127.0.0.1/live/$kanava)
+    fi
+    echo kanava $kanava musta
+    ffmpeg -re -f lavfi -i "color=s=768x432:c=black" -c:v h264_nvenc -preset p5 -tune ll -rc vbr -b:v 2.5M -maxrate 4M -bufsize 5M -r 25 -g 50 -keyint_min 50 -sc_threshold 0 -bf 0 -c:a aac -flush_packets 1 -f flv rtmp://127.0.0.1/live/$kanava >/dev/null 2>/dev/null &
+
+
+
+elif [[ "$komento" == "voima" ]]; then
+    if pgrep -f 127.0.0.1/live/$kanava &> /dev/null 2>&1; then
+        echo on jo käynnissä kanava $kanava tapetaan se
+        sudo kill -9 $(pgrep -f 127.0.0.1/live/$kanava)
+    fi
+    echo kanava $kanava voima ja testikuva
+    if [[ "$kanava" == "ch1" ]]; then
+        ffmpeg -re -f lavfi -i "smptehdbars=rate=25:size=768x432" -i https://radio.diks.fi/voima.mp3 -c:v h264_nvenc -preset p5 -tune ll -rc vbr -b:v 2.5M -maxrate 4M -bufsize 5M -vf drawtext="text='LAHTI1  %{localtime\:%X}':rate=30:x=(w-tw)/2:y=(h-lh)/2+63:fontsize=40:fontcolor=black" -r 25 -g 50 -keyint_min 50 -sc_threshold 0 -bf 0 -c:a aac -flush_packets 1 -f flv rtmp://127.0.0.1/live/ch1 >/dev/null 2>/dev/null &
+    elif [[ "$kanava" == "ch2" ]]; then
+        ffmpeg -re -f lavfi -i "smptehdbars=rate=25:size=768x432" -i https://radio.diks.fi/voima.mp3 -c:v h264_nvenc -preset p5 -tune ll -rc vbr -b:v 2.5M -maxrate 4M -bufsize 5M -vf drawtext="text='LAHTI2  %{localtime\:%X}':rate=30:x=(w-tw)/2:y=(h-lh)/2+63:fontsize=40:fontcolor=black" -r 25 -g 50 -keyint_min 50 -sc_threshold 0 -bf 0 -c:a aac -flush_packets 1 -f flv rtmp://127.0.0.1/live/ch2 >/dev/null 2>/dev/null &
+    fi
+
+elif [[ "$komento" == "stop" ]]; then
+    if pgrep -f 127.0.0.1/live/$kanava &> /dev/null 2>&1; then
+        sudo kill -9 $(pgrep -f 127.0.0.1/live/$kanava)
+    fi
+
+elif [[ "$komento" == "pid" ]]; then
+    pgrep -f 127.0.0.1/live/$kanava
+fi
+
+
+
+
+
+
+
+
+
+
+exit
+mkdir -p /dev/shm/tv
+kanava=$1
+url=$2
+ffmpeg -re -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i $url -c:v h264_nvenc -preset p5 -tune ll -rc vbr -b:v 2.5M -maxrate 4M -bufsize 5M -vf "yadif,scale=768:432" -r 25 -g 50 -keyint_min 50 -sc_threshold 0 -bf 0 -c:a copy -flush_packets 1 -f flv rtmp://127.0.0.1/live/$kanava >/dev/null 2>/dev/null &
+pid=$!
+echo $pid > /dev/shm/tv/ff$kanava.pid
+echo $pid
