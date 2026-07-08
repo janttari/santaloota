@@ -1,0 +1,2 @@
+#!/usr/bin/bash
+tar -czf gorestreamerjj.tar.gz pakkaa app.go streamreader go.mod
