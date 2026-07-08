@@ -1,0 +1,2 @@
+#!/usr/bin/bash
+tar -czf localwebradio.tar.gz main.js localwebradio.service package.json package-lock.json pakkaa lib
